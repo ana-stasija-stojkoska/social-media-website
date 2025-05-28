@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.7",
+    "axios": "^1.9.0",
     "daisyui": "^5.0.35",
     "localforage": "^1.10.0",
     "match-sorter": "^8.0.1",

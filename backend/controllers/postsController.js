@@ -29,15 +29,31 @@ export const getPosts = async (req, res) => {
   }
 };
 
+export const getPostsByUser = async (req, res) => {
+  const userId = req.params.userid;
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM post WHERE userid = $1 ORDER BY timecreated DESC",
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching user's posts:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 export const createPost = async (req, res) => {
   const userId = req.userId;
-  const { descr, img } = req.body;
+  const { descr, image } = req.body;
   const timecreated = new Date();
 
   try {
     const result = await pool.query(
-      "INSERT INTO post (userid, descr, img, timecreated) VALUES ($1, $2, $3, $4) RETURNING *",
-      [userId, descr, img, timecreated]
+      "INSERT INTO post (userid, descr, image, timecreated) VALUES ($1, $2, $3, $4) RETURNING *",
+      [userId, descr, image, timecreated]
     );
     res.status(201).json(result.rows[0]);
 
@@ -50,7 +66,7 @@ export const createPost = async (req, res) => {
 export const updatePost = async (req, res) => {
   const userId = req.userId;
   const postId = req.params.id;
-  const { descr, img } = req.body;
+  const { descr, image } = req.body;
 
   try {
     const post = await pool.query("SELECT * FROM post WHERE postid = $1", [
@@ -63,8 +79,8 @@ export const updatePost = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
     const result = await pool.query(
-      "UPDATE post SET descr = $1, img = $2 WHERE postid = $3 RETURNING *",
-      [descr, img, postId]
+      "UPDATE post SET descr = $1, image = $2 WHERE postid = $3 RETURNING *",
+      [descr, image, postId]
     );
     res.json(result.rows[0]);
 

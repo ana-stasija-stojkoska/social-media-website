@@ -2,11 +2,13 @@ import pool from "../db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+const saltRounds = 10;
+
 export const register = async (req, res) => {
   const { email, password, name, city, profilepicture } = req.body;
 
   try {
-    const userExists = await pool.query("SELECT * FROM user WHERE email = $1", [
+    const userExists = await pool.query('SELECT * FROM "user" WHERE email = $1', [
       email,
     ]);
     if (userExists.rows.length > 0) {
@@ -15,7 +17,7 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const result = await pool.query(
-      "INSERT INTO user (email, name, password, city, profilepicture) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      'INSERT INTO "user" (email, name, password, city, profilepicture) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [email, name, hashedPassword, city, profilepicture]
     );
 
@@ -30,7 +32,7 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const userResult = await pool.query("SELECT * FROM user WHERE email = $1", [
+    const userResult = await pool.query('SELECT * FROM "user" WHERE email = $1', [
       email,
     ]);
 
@@ -49,9 +51,13 @@ export const login = async (req, res) => {
       expiresIn: "1h",
     });
 
-    res.cookie("token", token, { httpOnly: true, secure: false });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // true if on HTTPS
+      sameSite: "lax",
+    });
     res.json({ message: "Logged in", userId: user.userid });
-    
+
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: "Server error" });
@@ -61,4 +67,5 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out" });
+  res.status(200);
 };
