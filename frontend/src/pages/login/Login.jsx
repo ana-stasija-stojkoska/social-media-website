@@ -1,6 +1,28 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { login as loginUser } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      const res = await loginUser({ email, password });
+      login(res.data.userId); // store userId in context
+      navigate("/");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed");
+    }
+  };
+
   return (
     <section>
       <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
@@ -9,7 +31,8 @@ const Login = () => {
             <h1 className="text-xl font-bold leading-tight tracking-tight md:text-2xl">
               Sign in to your account
             </h1>
-            <form className="space-y-4 md:space-y-6" action="#">
+
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
               <div>
                 <label
                   htmlFor="email"
@@ -21,9 +44,11 @@ const Login = () => {
                   type="email"
                   name="email"
                   id="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className={`input block w-full rounded-lg p-2.5`}
                   placeholder="name@company.com"
-                  required=""
                 />
               </div>
               <div>
@@ -37,9 +62,11 @@ const Login = () => {
                   type="password"
                   name="password"
                   id="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className={`input block w-full rounded-lg p-2.5`}
-                  required=""
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -50,13 +77,10 @@ const Login = () => {
                       aria-describedby="remember"
                       type="checkbox"
                       className={`checkbox`}
-                      required=""
                     />
                   </div>
                   <div className="ml-3 text-md">
-                    <label htmlFor="remember">
-                      Remember me
-                    </label>
+                    <label htmlFor="remember">Remember me</label>
                   </div>
                 </div>
                 <a
@@ -72,6 +96,9 @@ const Login = () => {
               >
                 Sign in
               </button>
+
+              {error && <p style={{ color: "red" }}>{error}</p>}
+              
               <p className="text-md font-light">
                 Don’t have an account yet?{" "}
                 <Link

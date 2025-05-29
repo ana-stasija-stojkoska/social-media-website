@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { logout as logoutUser } from "../../services/authService";
+import { useNavigate } from "react-router-dom";
 
 // Component Imports
 import SearchBar from "./SearchBar";
@@ -11,8 +14,12 @@ import userIcon from "../../assets/user.png";
 import friendIcon from "../../assets/small-talk.png";
 import marketplaceIcon from "../../assets/buy.png";
 import groupsIcon from "../../assets/group.png";
+import logoutIcon from "../../assets/logout.png";
 
 const NavBar = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("theme") || "light";
@@ -27,6 +34,16 @@ const NavBar = () => {
   useEffect(() => {
     document.querySelector("html").setAttribute("data-theme", theme);
   }, [theme]);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();   // call backend to clear cookie
+      logout();             // clear context
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout failed:", err.message);
+    }
+  };
 
   return (
     <>
@@ -46,18 +63,25 @@ const NavBar = () => {
             {/* Search (desktop) */}
             <SearchBar />
 
-            {/* Avatar (desktop) */}
-            <div
-              tabIndex={0}
-              role="button"
-              className="btn btn-ghost btn-circle avatar"
-            >
-              <div className="w-10 rounded-full">
-                <img
-                  alt="Tailwind CSS Navbar component"
-                  src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
-                />
+            {/* Avatar and Logout Button (desktop) */}
+            <div className="dropdown dropdown-end">
+              <div
+                tabIndex={0}
+                role="button"
+                className="btn btn-ghost btn-circle avatar"
+              >
+                <div className="w-10 rounded-full">
+                  <img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                </div>
               </div>
+              <ul
+                tabIndex={0}
+                className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+              >
+                <li>
+                  <button onClick={handleLogout}>Logout</button>
+                </li>
+              </ul>
             </div>
           </div>
 
@@ -83,10 +107,12 @@ const NavBar = () => {
             </svg>
           </button>
 
-          {/* Menu (mobile, with search) */}
+          {/* Menu and Search (mobile) */}
           <div
             className={`${
-              isMenuOpen ? "block max-h-[calc(100vh-4rem)] overflow-y-auto" : "hidden"
+              isMenuOpen
+                ? "block max-h-[calc(100vh-4rem)] overflow-y-auto"
+                : "hidden"
             } w-full md:flex md:w-auto md:order-1`}
           >
             <div
@@ -125,7 +151,7 @@ const NavBar = () => {
                 </li>
 
                 <li>
-                  {/* Messages button (only desktop) */}
+                  {/* Messages Button (only desktop) */}
                   <IconButton
                     svgPath={
                       <>
@@ -140,10 +166,7 @@ const NavBar = () => {
                     indicator
                   />
                   {/* Messages button (only mobile) */}
-                  <NavbarDropdownButton
-                    text="Messages"
-                    className="md:hidden"
-                  />
+                  <NavbarDropdownButton text="Messages" className="md:hidden" />
                 </li>
 
                 <li>
@@ -179,10 +202,13 @@ const NavBar = () => {
                   <img src={friendIcon} className="w-6 h-6" />
                 </NavbarDropdownButton>
                 <NavbarDropdownButton text="Groups">
-                  <img src={marketplaceIcon} className="w-6 h-6" />
+                  <img src={groupsIcon} className="w-6 h-6" />
                 </NavbarDropdownButton>
                 <NavbarDropdownButton text="Marketplace">
-                  <img src={groupsIcon} className="w-6 h-6" />
+                  <img src={marketplaceIcon} className="w-6 h-6" />
+                </NavbarDropdownButton>
+                <NavbarDropdownButton text="Logout" onClick={handleLogout}>
+                  <img src={logoutIcon} className="w-6 h-6" />
                 </NavbarDropdownButton>
               </ul>
             </div>

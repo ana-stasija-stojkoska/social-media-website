@@ -1,6 +1,34 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { register as registerUser } from "../../services/authService";
 
 const Register = () => {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [profilepicture, setProfilePicture] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      await registerUser({ email, password, name, city, profilepicture });
+      navigate("/login");
+    } catch (err) {
+      setError(err.response?.data?.message || "Registration failed");
+    }
+  };
+
   return (
     <section>
       <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
@@ -9,23 +37,46 @@ const Register = () => {
             <h1 className="text-xl font-bold leading-tight tracking-tight md:text-2xl">
               Create an account
             </h1>
-            <form className="space-y-4 md:space-y-6" action="#">
+
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block mb-2 text-md font-medium"
+                >
+                  Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  required
+                  className={`input block w-full rounded-lg p-2.5`}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="First Last"
+                />
+              </div>
+
               <div>
                 <label
                   htmlFor="email"
                   className="block mb-2 text-md font-medium"
                 >
-                  Your email
+                  Email
                 </label>
                 <input
                   type="email"
                   name="email"
                   id="email"
+                  required
                   className={`input block w-full rounded-lg p-2.5`}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
-                  required=""
                 />
               </div>
+
               <div>
                 <label
                   htmlFor="password"
@@ -37,11 +88,14 @@ const Register = () => {
                   type="password"
                   name="password"
                   id="password"
+                  required
                   placeholder="••••••••"
                   className={`input block w-full rounded-lg p-2.5`}
-                  required=""
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
+
               <div>
                 <label
                   htmlFor="confirmpassword"
@@ -53,11 +107,51 @@ const Register = () => {
                   type="password"
                   name="confirmpassword"
                   id="confirmpassword"
+                  required
                   placeholder="••••••••"
                   className={`input block w-full rounded-lg p-2.5`}
-                  required=""
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                 />
               </div>
+
+              <div>
+                <label
+                  htmlFor="city"
+                  className="block mb-2 text-md font-medium"
+                >
+                  City
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  id="city"
+                  required
+                  className={`input block w-full rounded-lg p-2.5`}
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="profilepicture"
+                  className="block mb-2 text-md font-medium"
+                >
+                  Profile Picture URL (optional)
+                </label>
+                <input
+                  type="text"
+                  name="profilepicture"
+                  id="profilepicture"
+                  className="input block w-full rounded-lg p-2.5"
+                  value={profilepicture}
+                  onChange={(e) => setProfilePicture(e.target.value)}
+                  placeholder="https://example.jpg"
+                />
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="flex items-start">
                   <div className="flex items-center h-5">
@@ -65,8 +159,8 @@ const Register = () => {
                       id="termsandconditions"
                       aria-describedby="termsandconditions"
                       type="checkbox"
+                      required
                       className={`checkbox`}
-                      required=""
                     />
                   </div>
                   <div className="ml-3 text-md">
@@ -82,12 +176,16 @@ const Register = () => {
                   </div>
                 </div>
               </div>
+
               <button
                 type="submit"
                 className={`btn btn-primary btn-block rounded-lg`}
               >
                 Create an account
               </button>
+
+              {error && <p style={{ color: "red" }}>{error}</p>}
+
               <p className="text-md font-light">
                 Already have an account?{" "}
                 <Link

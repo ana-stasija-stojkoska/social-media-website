@@ -1,4 +1,3 @@
-import { useState } from "react";
 import "./App.css";
 import {
   createBrowserRouter,
@@ -6,6 +5,7 @@ import {
   Outlet,
   RouterProvider,
 } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 // Page imports
 import Login from "./pages/login/Login";
@@ -17,24 +17,26 @@ import RightBar from "./components/rightbar/RightBar";
 import Profile from "./pages/profile/Profile";
 
 function App() {
-  const currentUser = true;
-
   const Layout = () => {
     return (
-    <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] lg:grid-cols-[250px_1fr_400px]
-                    gap-0 xl:gap-x-5 2xl:gap-x-15 3xl:gap-x-35">
-      <NavBar/>
-      <LeftBar />
-      <main className="mt-16 mx-5 p-4 h-[calc(100vh-64px)] overflow-y-auto col-span-1">
-        <Outlet />
-      </main>
-      <RightBar />
-    </div>
+      <div
+        className="grid grid-cols-1 md:grid-cols-[250px_1fr] lg:grid-cols-[250px_1fr_400px]
+                    gap-0 xl:gap-x-5 2xl:gap-x-15 3xl:gap-x-35"
+      >
+        <NavBar />
+        <LeftBar />
+        <main className="mt-16 mx-5 p-4 h-[calc(100vh-64px)] overflow-y-auto col-span-1">
+          <Outlet />
+        </main>
+        <RightBar />
+      </div>
     );
   };
 
   const ProtectedRoute = ({ children }) => {
-    if (!currentUser) {
+    const { userId } = useAuth();
+
+    if (!userId) {
       return <Navigate to="/login" />;
     }
     return children;
