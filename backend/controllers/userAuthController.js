@@ -56,7 +56,8 @@ export const login = async (req, res) => {
       secure: process.env.NODE_ENV === "production", // true if on HTTPS
       sameSite: "lax",
     });
-    res.json({ message: "Logged in", userId: user.userid });
+    const { password: _, ...safeUser } = user; // omit password
+    res.json({ message: "Logged in", user: safeUser });
 
   } catch (err) {
     console.error("Login error:", err.message);

@@ -1,11 +1,21 @@
+import { useAuth } from "../../context/AuthContext";
+
+import tempProfilePicture from "../../assets/temp-profile-picture.png";
+
 const UploadBlogPost = () => {
+  const { user } = useAuth();
+  
+    const profilePicture = user?.profilepicture
+      ? user?.profilepicture
+      : tempProfilePicture;
+
   return (
     <div className="flex flex-col overflow-hidden">
       <div className="grid grid-rows-2 gap-1 grid-cols-[auto_1fr] items-center">
         {/* User Avatar */}
         <div>
           <img
-            src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+            src={profilePicture}
             className="w-8 h-8 object-cover rounded-full mr-2"
           />
         </div>
@@ -13,7 +23,7 @@ const UploadBlogPost = () => {
         {/* Post Content */}
         <div>
           <textarea
-            placeholder="What's on your mind, Jane?"
+            placeholder={"What's on your mind, " + user?.name + "?"}
             className="w-full m-0 focus:outline-none content-center"
           />
         </div>

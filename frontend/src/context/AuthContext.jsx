@@ -1,15 +1,42 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // NEW
 
-  const login = (id) => setUserId(id);
-  const logout = () => setUserId(null);
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUserId) setUserId(storedUserId);
+    if (storedUser) setUser(JSON.parse(storedUser));
+
+    setLoading(false); // loading finished
+  }, []);
+
+  const login = (userData) => {
+    setUserId(userData.userid);
+    setUser(userData);
+    localStorage.setItem("userId", userData.userid);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
+
+  const logout = () => {
+    setUserId(null);
+    setUser(null);
+    localStorage.removeItem("userId");
+    localStorage.removeItem("user");
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <AuthContext.Provider value={{ userId, login, logout }}>
+    <AuthContext.Provider value={{ userId, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

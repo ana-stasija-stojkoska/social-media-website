@@ -5,6 +5,7 @@ import {
   Outlet,
   RouterProvider,
 } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuth } from "./context/AuthContext";
 
 // Page imports
@@ -17,25 +18,28 @@ import RightBar from "./components/rightbar/RightBar";
 import Profile from "./pages/profile/Profile";
 
 function App() {
+  const { userId } = useAuth();
+  const queryClient = new QueryClient();
+
   const Layout = () => {
     return (
-      <div
-        className="grid grid-cols-1 md:grid-cols-[250px_1fr] lg:grid-cols-[250px_1fr_400px]
+      <QueryClientProvider client={queryClient}>
+        <div
+          className="grid grid-cols-1 md:grid-cols-[250px_1fr] lg:grid-cols-[250px_1fr_400px]
                     gap-0 xl:gap-x-5 2xl:gap-x-15 3xl:gap-x-35"
-      >
-        <NavBar />
-        <LeftBar />
-        <main className="mt-16 mx-5 p-4 h-[calc(100vh-64px)] overflow-y-auto col-span-1">
-          <Outlet />
-        </main>
-        <RightBar />
-      </div>
+        >
+          <NavBar />
+          <LeftBar />
+          <main className="mt-16 mx-5 p-4 h-[calc(100vh-64px)] overflow-y-auto col-span-1">
+            <Outlet />
+          </main>
+          <RightBar />
+        </div>
+      </QueryClientProvider>
     );
   };
 
   const ProtectedRoute = ({ children }) => {
-    const { userId } = useAuth();
-
     if (!userId) {
       return <Navigate to="/login" />;
     }

@@ -1,7 +1,7 @@
+import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { login as loginUser } from "../../services/authService";
-import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +16,7 @@ const Login = () => {
 
     try {
       const res = await loginUser({ email, password });
-      login(res.data.userId); // store userId in context
+      login(res.data.user); // pass full user data into context
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -98,7 +98,7 @@ const Login = () => {
               </button>
 
               {error && <p style={{ color: "red" }}>{error}</p>}
-              
+
               <p className="text-md font-light">
                 Don’t have an account yet?{" "}
                 <Link
