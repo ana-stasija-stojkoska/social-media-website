@@ -1,5 +1,4 @@
-import { useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 import NavbarDropdownButton from "../navbar/NavbarDropdownButton";
 
@@ -11,13 +10,13 @@ import suggestedFriend from "../../assets/woman.jpg";
 import OnlineFriends from "../OnlineFriends";
 
 const LeftBar = () => {
-  const { user } = useContext(AuthContext);
+  const { userId, user } = useAuth();
 
   return (
     <aside className="hidden md:flex flex-col bg-base-200 h-[calc(100vh-64px)] mt-16 p-4 overflow-auto w-full">
       <ul className="menu text-base-content w-full gap-3 p-0 pt-4">
         <li>
-          <NavbarDropdownButton text={user?.name} to="/profile/:id">
+          <NavbarDropdownButton text={user?.name} to={`/profile/${userId}`}>
             <img src={userIcon} className="w-6 h-6" />
           </NavbarDropdownButton>
         </li>

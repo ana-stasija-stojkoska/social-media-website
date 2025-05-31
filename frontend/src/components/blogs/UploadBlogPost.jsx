@@ -1,13 +1,7 @@
 import { useAuth } from "../../context/AuthContext";
 
-import tempProfilePicture from "../../assets/temp-profile-picture.png";
-
 const UploadBlogPost = () => {
   const { user } = useAuth();
-  
-    const profilePicture = user?.profilepicture
-      ? user?.profilepicture
-      : tempProfilePicture;
 
   return (
     <div className="flex flex-col overflow-hidden">
@@ -15,7 +9,7 @@ const UploadBlogPost = () => {
         {/* User Avatar */}
         <div>
           <img
-            src={profilePicture}
+            src={user?.profilepicture}
             className="w-8 h-8 object-cover rounded-full mr-2"
           />
         </div>

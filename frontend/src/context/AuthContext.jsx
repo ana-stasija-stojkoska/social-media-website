@@ -11,14 +11,14 @@ export const AuthProvider = ({ children }) => {
     const storedUserId = localStorage.getItem("userId");
     const storedUser = localStorage.getItem("user");
 
-    if (storedUserId) setUserId(storedUserId);
+    if (storedUserId) setUserId(Number(storedUserId));
     if (storedUser) setUser(JSON.parse(storedUser));
 
-    setLoading(false); // loading finished
+    setLoading(false);
   }, []);
 
   const login = (userData) => {
-    setUserId(userData.userid);
+    setUserId(Number(userData.userid));
     setUser(userData);
     localStorage.setItem("userId", userData.userid);
     localStorage.setItem("user", JSON.stringify(userData));

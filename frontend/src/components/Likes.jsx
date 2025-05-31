@@ -1,8 +1,10 @@
-const Likes = ({ liked, handleLiked, numLikes }) => {
+const Likes = ({ liked, handleLiked, numLikes, loading }) => {
   return (
     <button
       className="btn btn-ghost flex items-center p-2"
       onClick={handleLiked}
+      disabled={loading}
+      aria-label={liked ? "Unlike post" : "Like post"}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

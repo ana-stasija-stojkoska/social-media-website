@@ -1,19 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { getUserById } from "../../services/userService";
+import {
+  getLikesByPost,
+  createPostLike,
+  deletePostLike,
+} from "../../services/postLikesService";
 
 import Comment from "../comments/Comment";
-
-import suggestedFriend from "../../assets/woman.jpg";
 import Likes from "../Likes";
 
-const BlogPost = () => {
-  const [numLikes, setNumLikes] = useState(0);
-  const [liked, toggleLiked] = useState(false);
-  const [commentsShown, toggleCommentsShown] = useState(false);
+const BlogPost = ({ Post }) => {
+  const { userId: currentUserId } = useAuth();
+  const [postAuthor, setPostAuthor] = useState(null);
 
-  const handleLiked = () => {
-    const newLiked = !liked;
-    toggleLiked(newLiked);
-    setNumLikes((prev) => prev + (newLiked ? 1 : -1));
+  const [numLikes, setNumLikes] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [commentsShown, toggleCommentsShown] = useState(false);
+  const [loadingLike, setLoadingLike] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPostAuthor() {
+      try {
+        const userData = await getUserById(Post.userid);
+        if (isMounted) setPostAuthor(userData);
+      } catch (err) {
+        if (isMounted) setPostAuthor(null);
+      }
+    }
+    fetchPostAuthor();
+    return () => {
+      isMounted = false;
+    };
+  }, [Post.userid]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchLikes() {
+      try {
+        const likes = await getLikesByPost(Post.postid);
+        if (!isMounted) return;
+
+        setNumLikes(likes.length);
+        setLiked(likes.some((like) => like.userid === currentUserId));
+      } catch {
+        if (isMounted) {
+          setNumLikes(0);
+          setLiked(false);
+        }
+      }
+    }
+    fetchLikes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [Post.postid, currentUserId]);
+
+  const handleLiked = async () => {
+    if (loadingLike) return;
+    setLoadingLike(true);
+
+    try {
+      if (liked) {
+        await deletePostLike(Post.postid);
+        setNumLikes((prev) => prev - 1);
+        setLiked(false);
+      } else {
+        await createPostLike(Post.postid);
+        setNumLikes((prev) => prev + 1);
+        setLiked(true);
+      }
+    } catch (err) {
+      console.error("Error toggling like", err);
+    } finally {
+      setLoadingLike(false);
+    }
   };
 
   const handleCommentsToggled = () => {
@@ -25,25 +88,24 @@ const BlogPost = () => {
       {/* Poster Avatar and Time */}
       <div className="flex flex-row items-center">
         <img
-          src={suggestedFriend}
+          src={postAuthor?.profilepicture}
           className="w-8 h-8 object-cover rounded-full mr-2"
         />
-        <span className="text-gray-500">a few seconds ago</span>
+        <span className="text-gray-500">{Post?.timecreated}</span>
       </div>
 
       {/* Post Content */}
-      <div className="mt-3">Lorem ipsum bla bla bla</div>
-      <div>
-        <img
-          className="w-full mt-3"
-          src="https://img.freepik.com/free-photo/friends-embracing-beach-looking-sky_23-2149450770.jpg?semt=ais_hybrid&w=740"
-        ></img>
-      </div>
+      <div className="mt-3">{Post?.descr}</div>
+      {Post?.image && Post.image.trim() !== "" && (
+        <div>
+          <img className="w-full mt-3" src={Post.image} />
+        </div>
+      )}
 
       {/* Post Reactions */}
       <div className="flex gap-1 mt-4">
         {/* Likes */}
-        <Likes liked={liked} handleLiked={handleLiked} numLikes={numLikes}/>
+        <Likes liked={liked} handleLiked={handleLiked} numLikes={numLikes} loading={loadingLike} />
 
         {/* Comments */}
         <button
@@ -90,9 +152,9 @@ const BlogPost = () => {
       {/* Comment Section */}
       {commentsShown && (
         <div className="flex flex-col gap-4 bg-base-200 mt-3 p-5">
-          <Comment/>
+          <Comment />
           <div className="divider m-0"></div>
-          <Comment/>
+          <Comment />
         </div>
       )}
     </div>

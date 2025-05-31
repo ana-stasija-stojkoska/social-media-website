@@ -1,10 +1,8 @@
-import { useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
-
-import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { logout as logoutUser } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
+
+import { useState, useEffect } from "react";
 
 // Component Imports
 import SearchBar from "./SearchBar";
@@ -13,7 +11,6 @@ import IconButton from "../IconButton";
 import ThemeToggleButton from "../ThemeToggleButton";
 
 // Asset Imports
-import tempProfilePicture from "../../assets/temp-profile-picture.png";
 import userIcon from "../../assets/user.png";
 import friendIcon from "../../assets/small-talk.png";
 import marketplaceIcon from "../../assets/buy.png";
@@ -21,7 +18,7 @@ import groupsIcon from "../../assets/group.png";
 import logoutIcon from "../../assets/logout.png";
 
 const NavBar = () => {
-  const { user } = useContext(AuthContext);
+  const { userId, user } = useAuth();
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -50,10 +47,6 @@ const NavBar = () => {
     }
   };
 
-  const profilePicture = user?.profilepicture
-      ? user?.profilepicture
-      : tempProfilePicture;
-
   return (
     <>
       <nav className="bg-base-100 col-span-full fixed top-0 left-0 right-0 w-full z-10">
@@ -80,7 +73,7 @@ const NavBar = () => {
                 className="btn btn-ghost btn-circle avatar"
               >
                 <div className="w-10 rounded-full">
-                  <img src={profilePicture} />
+                  <img src={user?.profilepicture} />
                 </div>
               </div>
               <ul
@@ -204,7 +197,7 @@ const NavBar = () => {
 
               {/* Sidebar Links */}
               <ul className="flex flex-col md:flex-row gap-2 md:gap-20 font-semibold md:hidden pb-3">
-                <NavbarDropdownButton text={user?.name} to="/profile/:2">
+                <NavbarDropdownButton text={user?.name} to={`/profile/${userId}`}>
                   <img src={userIcon} className="w-6 h-6" />
                 </NavbarDropdownButton>
                 <NavbarDropdownButton text="Friends">

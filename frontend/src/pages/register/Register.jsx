@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register as registerUser } from "../../services/authService";
 
+import tempProfilePicture from "../../assets/temp-profile-picture.png";
+
 const Register = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -21,8 +23,13 @@ const Register = () => {
       return;
     }
 
+     const finalProfilePicture =
+      profilepicture && profilepicture.trim() !== ""
+        ? profilepicture.trim()
+        : tempProfilePicture;
+
     try {
-      await registerUser({ email, password, name, city, profilepicture });
+      await registerUser({ email, password, name, city, finalProfilePicture });
       navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
