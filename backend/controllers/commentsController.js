@@ -51,12 +51,11 @@ export const getCommentsByPost = async (req, res) => {
 export const createComment = async (req, res) => {
   const userId = req.userId;
   const { postid, descr } = req.body;
-  const timecreated = new Date();
 
   try {
     const result = await pool.query(
-      "INSERT INTO comment (userid, postid, descr, timecreated) VALUES ($1, $2, $3, $4) RETURNING *",
-      [userId, postid, descr, timecreated]
+      "INSERT INTO comment (userid, postid, descr) VALUES ($1, $2, $3) RETURNING *",
+      [userId, postid, descr]
     );
     res.status(201).json(result.rows[0]);
 

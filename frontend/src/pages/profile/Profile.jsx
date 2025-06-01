@@ -51,7 +51,7 @@ const Profile = () => {
 
           <div className="flex md:mt-6 gap-3">
             {isCurrentUser ? (
-              <button className="btn btn-secondary">Edit</button>
+              <button className="btn btn-primary">Edit</button>
             ) : (
               <>
                 <button className="btn btn-primary">Add friend</button>

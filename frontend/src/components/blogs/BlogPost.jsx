@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getUserById } from "../../services/userService";
+import { deletePost } from "../../services/postService";
+import { updatePost } from "../../services/postService";
 import {
   getLikesByPost,
   createPostLike,
   deletePostLike,
 } from "../../services/postLikesService";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import Comment from "../comments/Comment";
 import Likes from "../Likes";
@@ -13,6 +16,20 @@ import Likes from "../Likes";
 const BlogPost = ({ Post }) => {
   const { userId: currentUserId } = useAuth();
   const [postAuthor, setPostAuthor] = useState(null);
+
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: () => deletePost(Post.postid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+  const editMutation = useMutation({
+    mutationFn: ({ postId, updatedData }) => updatePost(postId, updatedData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
 
   const [numLikes, setNumLikes] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -58,6 +75,35 @@ const BlogPost = ({ Post }) => {
     };
   }, [Post.postid, currentUserId]);
 
+  const handleDelete = () => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+
+    deleteMutation.mutate(undefined, {
+      onError: (error) => {
+        console.error("Failed to delete post:", error);
+        alert("Failed to delete post");
+      },
+    });
+  };
+
+  const handleEdit = async () => {
+    const newDescr = window.prompt("Edit your post:", Post.descr);
+    if (newDescr === null || newDescr.trim() === "") return;
+
+    try {
+      await editMutation.mutateAsync({
+        postId: Post.postid,
+        updatedData: {
+          descr: newDescr.trim(),
+          image: Post.image,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to update post:", err);
+      alert("Failed to update post");
+    }
+  };
+
   const handleLiked = async () => {
     if (loadingLike) return;
     setLoadingLike(true);
@@ -91,7 +137,17 @@ const BlogPost = ({ Post }) => {
           src={postAuthor?.profilepicture}
           className="w-8 h-8 object-cover rounded-full mr-2"
         />
-        <span className="text-gray-500">{Post?.timecreated}</span>
+        <span className="text-gray-500">
+          {Post?.timecreated &&
+            new Date(Post.timecreated).toLocaleString("en-US", {
+              timeZone: "Europe/Skopje",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+        </span>
       </div>
 
       {/* Post Content */}
@@ -105,7 +161,12 @@ const BlogPost = ({ Post }) => {
       {/* Post Reactions */}
       <div className="flex gap-1 mt-4">
         {/* Likes */}
-        <Likes liked={liked} handleLiked={handleLiked} numLikes={numLikes} loading={loadingLike} />
+        <Likes
+          liked={liked}
+          handleLiked={handleLiked}
+          numLikes={numLikes}
+          loading={loadingLike}
+        />
 
         {/* Comments */}
         <button
@@ -127,26 +188,19 @@ const BlogPost = ({ Post }) => {
           5 Comments
         </button>
 
-        {/* Share */}
-        <button className="btn btn-ghost flex items-center p-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="18" cy="5" r="3"></circle>
-            <circle cx="6" cy="12" r="3"></circle>
-            <circle cx="18" cy="19" r="3"></circle>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-          </svg>
-          Share
-        </button>
+        {currentUserId === Post.userid && (
+          <div className="ml-auto flex gap-1">
+            {/* Edit Button */}
+            <button onClick={handleEdit} className="btn btn-primary">
+              Edit
+            </button>
+
+            {/* Delete Button */}
+            <button onClick={handleDelete} className="btn btn-error">
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Comment Section */}
