@@ -48,6 +48,21 @@ export const getCommentsByPost = async (req, res) => {
   }
 };
 
+export const getCommentsCountByPost = async (req, res) => {
+  const { postid } = req.params;
+
+  try {
+    const result = await pool.query(
+      "SELECT COUNT(*) AS count FROM comment WHERE postid = $1",
+      [postid]
+    );
+    res.json({ count: Number(result.rows[0].count) });
+  } catch (err) {
+    console.error("Error getting comments count by post:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 export const createComment = async (req, res) => {
   const userId = req.userId;
   const { postid, descr } = req.body;

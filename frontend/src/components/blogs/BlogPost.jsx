@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getUserById } from "../../services/userService";
-import { deletePost } from "../../services/postService";
-import { updatePost } from "../../services/postService";
+import { deletePost, updatePost } from "../../services/postService";
 import {
   getLikesByPost,
   createPostLike,
   deletePostLike,
 } from "../../services/postLikesService";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getCommentsByPost,
+  getCommentsCountByPost,
+} from "../../services/commentService";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 
 import Comment from "../comments/Comment";
+import PostComment from "../comments/PostComment";
 import Likes from "../Likes";
 
 const BlogPost = ({ Post }) => {
@@ -18,12 +22,43 @@ const BlogPost = ({ Post }) => {
   const [postAuthor, setPostAuthor] = useState(null);
 
   const queryClient = useQueryClient();
+
+  const [commentsShown, toggleCommentsShown] = useState(false);
+
+  const [numLikes, setNumLikes] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [loadingLike, setLoadingLike] = useState(false);
+
+  // Get Number Post Comments
+  const {
+    data: commentsCountData,
+    isLoading: commentsCountLoading,
+    isError: commentsCountError,
+  } = useQuery({
+    queryKey: ["commentsCount", Post.postid],
+    queryFn: () => getCommentsCountByPost(Post.postid),
+    staleTime: 60 * 1000,
+  });
+
+  // Get Post Comments
+  const {
+    data: comments = [],
+    isLoading: commentsLoading,
+    isError: commentsError,
+    refetch: refetchComments,
+  } = useQuery({
+    queryKey: ["comments", Post.postid],
+    queryFn: () => getCommentsByPost(Post.postid),
+    enabled: commentsShown,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => deletePost(Post.postid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
+
   const editMutation = useMutation({
     mutationFn: ({ postId, updatedData }) => updatePost(postId, updatedData),
     onSuccess: () => {
@@ -31,18 +66,14 @@ const BlogPost = ({ Post }) => {
     },
   });
 
-  const [numLikes, setNumLikes] = useState(0);
-  const [liked, setLiked] = useState(false);
-  const [commentsShown, toggleCommentsShown] = useState(false);
-  const [loadingLike, setLoadingLike] = useState(false);
-
+  // Get Poster
   useEffect(() => {
     let isMounted = true;
     async function fetchPostAuthor() {
       try {
         const userData = await getUserById(Post.userid);
         if (isMounted) setPostAuthor(userData);
-      } catch (err) {
+      } catch {
         if (isMounted) setPostAuthor(null);
       }
     }
@@ -52,6 +83,7 @@ const BlogPost = ({ Post }) => {
     };
   }, [Post.userid]);
 
+  // Get Blog Post Likes
   useEffect(() => {
     let isMounted = true;
     async function fetchLikes() {
@@ -75,6 +107,7 @@ const BlogPost = ({ Post }) => {
     };
   }, [Post.postid, currentUserId]);
 
+  // Delete Blog Post
   const handleDelete = () => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
 
@@ -86,6 +119,7 @@ const BlogPost = ({ Post }) => {
     });
   };
 
+  // Edit Blog Post
   const handleEdit = async () => {
     const newDescr = window.prompt("Edit your post:", Post.descr);
     if (newDescr === null || newDescr.trim() === "") return;
@@ -104,6 +138,7 @@ const BlogPost = ({ Post }) => {
     }
   };
 
+  // Like Blog Post
   const handleLiked = async () => {
     if (loadingLike) return;
     setLoadingLike(true);
@@ -185,7 +220,7 @@ const BlogPost = ({ Post }) => {
           >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          5 Comments
+          {commentsCountData?.count ?? 0} Comments
         </button>
 
         {currentUserId === Post.userid && (
@@ -205,10 +240,25 @@ const BlogPost = ({ Post }) => {
 
       {/* Comment Section */}
       {commentsShown && (
-        <div className="flex flex-col gap-4 bg-base-200 mt-3 p-5">
-          <Comment />
-          <div className="divider m-0"></div>
-          <Comment />
+        <div className="flex flex-col gap-7 bg-base-200 mt-3 p-5">
+          <PostComment
+            postId={Post.postid}
+            onCommentPosted={() => {
+              refetchComments();
+              queryClient.invalidateQueries({
+                queryKey: ["commentsCount", Post.postid],
+              });
+            }}
+          />
+          {commentsLoading && (
+            <span className="text-sm">Loading comments...</span>
+          )}
+          {commentsError && (
+            <span className="text-red-500">Failed to load comments.</span>
+          )}
+          {comments.map((comment) => (
+            <Comment key={comment.commentid} comment={comment} />
+          ))}
         </div>
       )}
     </div>

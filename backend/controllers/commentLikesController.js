@@ -49,7 +49,6 @@ export const getCommentLikesByComment = async (req, res) => {
 export const createCommentLike = async (req, res) => {
   const userId = req.userId;
   const { commentid } = req.body;
-  const timecreated = new Date();
 
   try {
     const existing = await pool.query(
@@ -61,8 +60,8 @@ export const createCommentLike = async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO commentlikes (userid, commentid, timecreated) VALUES ($1, $2, $3) RETURNING *",
-      [userId, commentid, timecreated]
+      "INSERT INTO commentlikes (userid, commentid) VALUES ($1, $2) RETURNING *",
+      [userId, commentid]
     );
     res.status(201).json(result.rows[0]);
 

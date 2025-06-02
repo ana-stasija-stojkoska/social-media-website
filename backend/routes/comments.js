@@ -3,6 +3,7 @@ import {
   getComment,
   getComments,
   getCommentsByPost,
+  getCommentsCountByPost,
   createComment,
   updateComment,
   deleteComment,
@@ -14,6 +15,7 @@ const router = express.Router();
 router.get("/post/:postid", getCommentsByPost);
 router.get("/:id", getComment);
 router.get("/", getComments);
+router.get("/count/:postid", getCommentsCountByPost);
 router.post("/", verifyToken, createComment);
 router.put("/:id", verifyToken, updateComment);
 router.delete("/:id", verifyToken, deleteComment);

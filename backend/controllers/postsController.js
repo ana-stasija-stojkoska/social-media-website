@@ -48,12 +48,11 @@ export const getPostsByUser = async (req, res) => {
 export const createPost = async (req, res) => {
   const userId = req.userId;
   const { descr, image } = req.body;
-  const timecreated = new Date();
 
   try {
     const result = await pool.query(
-      "INSERT INTO post (userid, descr, image, timecreated) VALUES ($1, $2, $3, $4) RETURNING *",
-      [userId, descr, image, timecreated]
+      "INSERT INTO post (userid, descr, image) VALUES ($1, $2, $3) RETURNING *",
+      [userId, descr, image]
     );
     res.status(201).json(result.rows[0]);
 

@@ -12,7 +12,6 @@ const UploadBlogPost = () => {
   const { mutate, isLoading } = useMutation({
     mutationFn: createPost,
     onSuccess: () => {
-      // Clear form and refetch posts
       setDescr("");
       setImage("");
       queryClient.invalidateQueries({ queryKey: ["posts"] });

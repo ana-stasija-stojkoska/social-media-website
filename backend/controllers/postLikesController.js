@@ -48,7 +48,6 @@ export const getPostLikesByPost = async (req, res) => {
 export const createPostLike = async (req, res) => {
   const userId = req.userId;
   const { postid } = req.body;
-  const timecreated = new Date();
 
   try {
     const existing = await pool.query(
@@ -59,8 +58,8 @@ export const createPostLike = async (req, res) => {
       return res.status(400).json({ message: "Post already liked" });
     }
     const result = await pool.query(
-      "INSERT INTO postlikes (userid, postid, timecreated) VALUES ($1, $2, $3) RETURNING *",
-      [userId, postid, timecreated]
+      "INSERT INTO postlikes (userid, postid) VALUES ($1, $2) RETURNING *",
+      [userId, postid]
     );
     res.status(201).json(result.rows[0]);
 
