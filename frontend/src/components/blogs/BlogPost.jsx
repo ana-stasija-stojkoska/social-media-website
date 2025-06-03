@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getUserById } from "../../services/userService";
-import { deletePost, updatePost } from "../../services/postService";
+import {
+  deletePost,
+  updatePost,
+} from "../../services/postService";
 import {
   getLikesByPost,
   createPostLike,
@@ -11,7 +14,11 @@ import {
   getCommentsByPost,
   getCommentsCountByPost,
 } from "../../services/commentService";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import Comment from "../comments/Comment";
 import PostComment from "../comments/PostComment";
@@ -19,21 +26,27 @@ import Likes from "../Likes";
 
 const BlogPost = ({ Post }) => {
   const { userId: currentUserId } = useAuth();
-  const [postAuthor, setPostAuthor] = useState(null);
-
   const queryClient = useQueryClient();
 
   const [commentsShown, toggleCommentsShown] = useState(false);
-
   const [numLikes, setNumLikes] = useState(0);
   const [liked, setLiked] = useState(false);
   const [loadingLike, setLoadingLike] = useState(false);
 
-  // Get Number Post Comments
+  // Get Post Author
+  const {
+    data: postAuthor,
+    isLoading: authorLoading,
+    isError: authorError,
+  } = useQuery({
+    queryKey: ["user", Post.userid],
+    queryFn: () => getUserById(Post.userid),
+    staleTime: 60 * 1000,
+  });
+
+  // Get Post Comments Count
   const {
     data: commentsCountData,
-    isLoading: commentsCountLoading,
-    isError: commentsCountError,
   } = useQuery({
     queryKey: ["commentsCount", Post.postid],
     queryFn: () => getCommentsCountByPost(Post.postid),
@@ -66,83 +79,38 @@ const BlogPost = ({ Post }) => {
     },
   });
 
-  // Get Poster
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchPostAuthor() {
-      try {
-        const userData = await getUserById(Post.userid);
-        if (isMounted) setPostAuthor(userData);
-      } catch {
-        if (isMounted) setPostAuthor(null);
-      }
-    }
-    fetchPostAuthor();
-    return () => {
-      isMounted = false;
-    };
-  }, [Post.userid]);
+  useQuery({
+    queryKey: ["postLikes", Post.postid],
+    queryFn: () => getLikesByPost(Post.postid),
+    onSuccess: (likes) => {
+      setNumLikes(likes.length);
+      setLiked(likes.some((like) => like.userid === currentUserId));
+    },
+    staleTime: 60 * 1000,
+  });
 
-  // Get Blog Post Likes
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchLikes() {
-      try {
-        const likes = await getLikesByPost(Post.postid);
-        if (!isMounted) return;
-
-        setNumLikes(likes.length);
-        setLiked(likes.some((like) => like.userid === currentUserId));
-      } catch {
-        if (isMounted) {
-          setNumLikes(0);
-          setLiked(false);
-        }
-      }
-    }
-    fetchLikes();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [Post.postid, currentUserId]);
-
-  // Delete Blog Post
+  // Delete Post
   const handleDelete = () => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-
-    deleteMutation.mutate(undefined, {
-      onError: (error) => {
-        console.error("Failed to delete post:", error);
-        alert("Failed to delete post");
-      },
-    });
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      deleteMutation.mutate();
+    }
   };
 
-  // Edit Blog Post
+  // Edit Post
   const handleEdit = async () => {
     const newDescr = window.prompt("Edit your post:", Post.descr);
-    if (newDescr === null || newDescr.trim() === "") return;
-
-    try {
+    if (newDescr?.trim()) {
       await editMutation.mutateAsync({
         postId: Post.postid,
-        updatedData: {
-          descr: newDescr.trim(),
-          image: Post.image,
-        },
+        updatedData: { descr: newDescr.trim(), image: Post.image },
       });
-    } catch (err) {
-      console.error("Failed to update post:", err);
-      alert("Failed to update post");
     }
   };
 
-  // Like Blog Post
+  // Like/Unlike
   const handleLiked = async () => {
     if (loadingLike) return;
     setLoadingLike(true);
-
     try {
       if (liked) {
         await deletePostLike(Post.postid);
@@ -166,7 +134,7 @@ const BlogPost = ({ Post }) => {
 
   return (
     <div className="flex flex-col overflow-hidden">
-      {/* Poster Avatar and Time */}
+      {/* Poster Info */}
       <div className="flex flex-row items-center">
         <img
           src={postAuthor?.profilepicture}
@@ -185,17 +153,16 @@ const BlogPost = ({ Post }) => {
         </span>
       </div>
 
-      {/* Post Content */}
+      {/* Content */}
       <div className="mt-3">{Post?.descr}</div>
-      {Post?.image && Post.image.trim() !== "" && (
+      {Post?.image && Post.image.trim() && (
         <div>
           <img className="w-full mt-3" src={Post.image} />
         </div>
       )}
 
-      {/* Post Reactions */}
+      {/* Reactions */}
       <div className="flex gap-1 mt-4">
-        {/* Likes */}
         <Likes
           liked={liked}
           handleLiked={handleLiked}
@@ -203,7 +170,6 @@ const BlogPost = ({ Post }) => {
           loading={loadingLike}
         />
 
-        {/* Comments */}
         <button
           className="btn btn-ghost flex items-center p-2"
           onClick={handleCommentsToggled}
@@ -225,12 +191,9 @@ const BlogPost = ({ Post }) => {
 
         {currentUserId === Post.userid && (
           <div className="ml-auto flex gap-1">
-            {/* Edit Button */}
             <button onClick={handleEdit} className="btn btn-primary">
               Edit
             </button>
-
-            {/* Delete Button */}
             <button onClick={handleDelete} className="btn btn-error">
               Delete
             </button>
@@ -238,7 +201,7 @@ const BlogPost = ({ Post }) => {
         )}
       </div>
 
-      {/* Comment Section */}
+      {/* Comments */}
       {commentsShown && (
         <div className="flex flex-col gap-7 bg-base-200 mt-3 p-5">
           <PostComment

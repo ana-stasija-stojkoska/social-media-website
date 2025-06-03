@@ -1,55 +1,43 @@
-import { useEffect, useState } from "react";
-import { getUserById } from "../../services/userService";
 import {
   getCommentLikesByComment,
   createCommentLike,
   deleteCommentLike,
 } from "../../services/commentLikesService";
 import { useAuth } from "../../context/AuthContext";
-
+import { getUserById } from "../../services/userService";
+import { useQuery } from "@tanstack/react-query";
 import Likes from "../Likes";
+import { useState } from "react";
 
 const Comment = ({ comment }) => {
-  const [author, setAuthor] = useState(null);
+  const { userId } = useAuth();
+
   const [numLikes, setNumLikes] = useState(0);
   const [liked, setLiked] = useState(false);
   const [loadingLike, setLoadingLike] = useState(false);
 
-  const { userId } = useAuth();
+  // Get Comment Author
+  const {
+    data: author,
+    isLoading: authorLoading,
+    isError: authorError,
+  } = useQuery({
+    queryKey: ["user", comment.userid],
+    queryFn: () => getUserById(comment.userid),
+    staleTime: 60 * 1000,
+  });
 
-  // Get Comment Author and Likes
-  useEffect(() => {
-    let isMounted = true;
+  // Get Comment Likes
+  useQuery({
+    queryKey: ["commentLikes", comment.commentid],
+    queryFn: () => getCommentLikesByComment(comment.commentid),
+    onSuccess: (likes) => {
+      setNumLikes(likes.length);
+      setLiked(likes.some((like) => like.userid === userId));
+    },
+    staleTime: 60 * 1000,
+  });
 
-    async function fetchData() {
-      try {
-        const [userData, likes] = await Promise.all([
-          getUserById(comment.userid),
-          getCommentLikesByComment(comment.commentid),
-        ]);
-
-        if (!isMounted) return;
-
-        setAuthor(userData);
-        setNumLikes(likes.length);
-        setLiked(likes.some((like) => like.userid === userId));
-      } catch (err) {
-        if (isMounted) {
-          setAuthor(null);
-          setNumLikes(0);
-          setLiked(false);
-        }
-      }
-    }
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [comment.userid, comment.commentid, userId]);
-
-  // Toggle Like
   const handleLiked = async () => {
     if (loadingLike) return;
     setLoadingLike(true);

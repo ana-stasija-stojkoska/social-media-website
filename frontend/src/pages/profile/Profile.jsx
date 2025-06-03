@@ -3,14 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { getPostsByUser } from "../../services/postService";
 import { useParams } from "react-router-dom";
 import { getUserById } from "../../services/userService";
+import { useState } from "react";
 
 import BlogPost from "../../components/blogs/BlogPost";
 import UploadBlogPost from "../../components/blogs/UploadBlogPost";
+import EditUserForm from "../../components/users/EditUserForm";
 
 const Profile = () => {
   const { userId } = useAuth();
   const { id } = useParams();
   const profileUserId = parseInt(id, 10);
+
+  const [isEditing, setIsEditing] = useState(false);
 
   const {
     data: profileUser,
@@ -51,7 +55,12 @@ const Profile = () => {
 
           <div className="flex md:mt-6 gap-3">
             {isCurrentUser ? (
-              <button className="btn btn-primary">Edit</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit
+              </button>
             ) : (
               <>
                 <button className="btn btn-primary">Add friend</button>
@@ -62,24 +71,27 @@ const Profile = () => {
         </div>
       </div>
 
+      {isEditing && (
+        <EditUserForm
+          initialData={profileUser}
+          onClose={() => setIsEditing(false)}
+        />
+      )}
+
       {isCurrentUser && (
         <div className="bg-base-100 rounded p-5 mb-4">
           <UploadBlogPost />
         </div>
       )}
 
-      {postsError
-        ? "Something went wrong!"
-        : isPostsLoading
-        ? "loading"
-        : posts.map((post) => (
-            <div
-              key={post.postid}
-              className="bg-base-100 rounded p-5 mb-4 overflow-hidden"
-            >
-              <BlogPost Post={post} />
-            </div>
-          ))}
+      {posts.map((post) => (
+        <div
+          key={post.postid}
+          className="bg-base-100 rounded p-5 mb-4 overflow-hidden"
+        >
+          <BlogPost Post={post} />
+        </div>
+      ))}
     </>
   );
 };

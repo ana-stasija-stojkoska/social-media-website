@@ -5,7 +5,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // NEW
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
@@ -31,12 +31,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <AuthContext.Provider value={{ userId, user, login, logout }}>
+    <AuthContext.Provider value={{ userId, user, setUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
