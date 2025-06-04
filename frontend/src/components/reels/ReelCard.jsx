@@ -1,6 +1,13 @@
 import IconButton from "../IconButton";
 
-const ReelCard = ({ image, isUpload = false, label }) => {
+const ReelCard = ({ image, isUpload = false, label, onUpload }) => {
+  const handleUploadClick = () => {
+    const url = prompt("Enter image URL for the reel:");
+    if (url && onUpload) {
+      onUpload(url.trim());
+    }
+  };
+
   return (
     <div className="shrink-0 w-45 h-64 rounded relative">
       <img
@@ -11,6 +18,7 @@ const ReelCard = ({ image, isUpload = false, label }) => {
       {isUpload ? (
         <div className="absolute bottom-3 left-3">
           <IconButton
+            onClick={handleUploadClick}
             svgPath={
               <>
                 <line x1="12" y1="5" x2="12" y2="19" />
