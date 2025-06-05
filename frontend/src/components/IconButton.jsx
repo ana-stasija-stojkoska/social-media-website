@@ -10,7 +10,7 @@ const IconButton = ({
   label,
   onClick,
   swap,
-  hiddenOn = "md", // md:flex by default
+  hiddenOn = "md",
   variant = "ghost",
   to
 }) => {
