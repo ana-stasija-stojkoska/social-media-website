@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAllPosts } from "../../services/postService";
+import { getFeedPosts } from "../../services/postService";
 
 import Reels from "../../components/reels/Reels";
 import BlogPost from "../../components/blogs/BlogPost";
@@ -11,7 +11,7 @@ const Home = () => {
     data = [],
   } = useQuery({
     queryKey: ["posts"],
-    queryFn: getAllPosts,
+    queryFn: getFeedPosts,
   });
 
   return (

@@ -124,7 +124,7 @@ const Profile = () => {
 
       {isCurrentUser && (
         <div className="bg-base-100 rounded p-5 mb-4">
-          <UploadBlogPost />
+          <UploadBlogPost profileUserId={profileUserId}/>
         </div>
       )}
 

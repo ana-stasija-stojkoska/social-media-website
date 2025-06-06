@@ -15,6 +15,11 @@ export const getPostsByUser = async (userId) => {
   return response.data;
 };
 
+export const getFeedPosts = async () => {
+  const response = await axios.get("/posts/feed");
+  return response.data;
+};
+
 export const createPost = async (postData) => {
   const response = await axios.post("/posts", postData);
   return response.data;

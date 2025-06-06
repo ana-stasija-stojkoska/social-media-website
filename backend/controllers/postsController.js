@@ -11,7 +11,6 @@ export const getPost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
     res.json(result.rows[0]);
-
   } catch (err) {
     console.error("Error fetching post:", err.message);
     res.status(500).json({ message: "Server error" });
@@ -20,9 +19,10 @@ export const getPost = async (req, res) => {
 
 export const getPosts = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM post ORDER BY timecreated DESC");
+    const result = await pool.query(
+      "SELECT * FROM post ORDER BY timecreated DESC"
+    );
     res.json(result.rows);
-
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -44,6 +44,34 @@ export const getPostsByUser = async (req, res) => {
   }
 };
 
+export const getFollowedUsersPosts = async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT post.*
+      FROM post
+      WHERE post.userid = $1
+
+      UNION
+
+      SELECT post.*
+      FROM post
+      JOIN follows ON post.userid = follows.followeduserid
+      WHERE follows.followeruserid = $1
+
+      ORDER BY timecreated DESC
+      `,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching feed posts:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const createPost = async (req, res) => {
   const userId = req.userId;
@@ -55,7 +83,6 @@ export const createPost = async (req, res) => {
       [userId, descr, image]
     );
     res.status(201).json(result.rows[0]);
-
   } catch (err) {
     console.error("Error creating post:", err.message);
     res.status(500).json({ message: "Server error" });
@@ -82,7 +109,6 @@ export const updatePost = async (req, res) => {
       [descr, image, postId]
     );
     res.json(result.rows[0]);
-
   } catch (err) {
     console.error("Error updating post:", err.message);
     res.status(500).json({ message: "Server error" });
@@ -105,7 +131,6 @@ export const deletePost = async (req, res) => {
     }
     await pool.query("DELETE FROM post WHERE postid = $1", [postId]);
     res.json({ message: "Post deleted" });
-
   } catch (err) {
     console.error("Error deleting post:", err.message);
     res.status(500).json({ message: "Server error" });

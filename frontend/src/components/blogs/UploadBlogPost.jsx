@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPost } from "../../services/postService";
 
-const UploadBlogPost = () => {
+const UploadBlogPost = ({ profileUserId }) => {
   const { user } = useAuth();
   const [descr, setDescr] = useState("");
   const [image, setImage] = useState("");
@@ -14,7 +14,11 @@ const UploadBlogPost = () => {
     onSuccess: () => {
       setDescr("");
       setImage("");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+
+      queryClient.invalidateQueries({ queryKey: ["posts"] }); // Invalidate Posts on Home component
+      if (profileUserId) {
+        queryClient.invalidateQueries({ queryKey: ["posts", profileUserId] }); // Invalidate Posts on Profile component
+      }
     },
   });
 
