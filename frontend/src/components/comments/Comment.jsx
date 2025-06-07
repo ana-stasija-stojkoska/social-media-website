@@ -5,16 +5,12 @@ import {
 } from "../../services/commentLikesService";
 import { useAuth } from "../../context/AuthContext";
 import { getUserById } from "../../services/userService";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Likes from "../Likes";
-import { useState } from "react";
 
 const Comment = ({ comment }) => {
   const { userId } = useAuth();
-
-  const [numLikes, setNumLikes] = useState(0);
-  const [liked, setLiked] = useState(false);
-  const [loadingLike, setLoadingLike] = useState(false);
+  const queryClient = useQueryClient();
 
   // Get Comment Author
   const {
@@ -28,34 +24,40 @@ const Comment = ({ comment }) => {
   });
 
   // Get Comment Likes
-  useQuery({
+  const {
+    data: commentLikes = [],
+    isLoading: likesLoading,
+  } = useQuery({
     queryKey: ["commentLikes", comment.commentid],
     queryFn: () => getCommentLikesByComment(comment.commentid),
-    onSuccess: (likes) => {
-      setNumLikes(likes.length);
-      setLiked(likes.some((like) => like.userid === userId));
-    },
     staleTime: 60 * 1000,
   });
 
-  const handleLiked = async () => {
-    if (loadingLike) return;
-    setLoadingLike(true);
+  const numLikes = commentLikes.length;
+  const liked = commentLikes.some((like) => like.userid === userId);
 
-    try {
-      if (liked) {
-        await deleteCommentLike(comment.commentid);
-        setNumLikes((prev) => prev - 1);
-        setLiked(false);
-      } else {
-        await createCommentLike(comment.commentid);
-        setNumLikes((prev) => prev + 1);
-        setLiked(true);
-      }
-    } catch (err) {
-      console.error("Error toggling comment like:", err);
-    } finally {
-      setLoadingLike(false);
+  const likeMutation = useMutation({
+    mutationFn: () => createCommentLike(comment.commentid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["commentLikes", comment.commentid] });
+    },
+  });
+
+  const unlikeMutation = useMutation({
+    mutationFn: () => deleteCommentLike(comment.commentid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["commentLikes", comment.commentid] });
+    },
+  });
+
+  const loadingLike = likeMutation.isLoading || unlikeMutation.isLoading || likesLoading;
+
+  const handleLiked = () => {
+    if (loadingLike) return;
+    if (liked) {
+      unlikeMutation.mutate();
+    } else {
+      likeMutation.mutate();
     }
   };
 
@@ -66,6 +68,7 @@ const Comment = ({ comment }) => {
         <img
           src={author?.profilepicture}
           className="w-8 h-8 object-cover rounded-full mr-2"
+          alt={author?.name || "User"}
         />
         <span className="font-semibold mr-2">
           {author?.name || "Unknown User"}

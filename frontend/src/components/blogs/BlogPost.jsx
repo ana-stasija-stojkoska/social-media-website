@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getUserById } from "../../services/userService";
-import {
-  deletePost,
-  updatePost,
-} from "../../services/postService";
+import { deletePost, updatePost } from "../../services/postService";
 import {
   getLikesByPost,
   createPostLike,
@@ -14,11 +11,7 @@ import {
   getCommentsByPost,
   getCommentsCountByPost,
 } from "../../services/commentService";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Comment from "../comments/Comment";
 import PostComment from "../comments/PostComment";
@@ -29,25 +22,17 @@ const BlogPost = ({ Post }) => {
   const queryClient = useQueryClient();
 
   const [commentsShown, toggleCommentsShown] = useState(false);
-  const [numLikes, setNumLikes] = useState(0);
-  const [liked, setLiked] = useState(false);
   const [loadingLike, setLoadingLike] = useState(false);
 
   // Get Post Author
-  const {
-    data: postAuthor,
-    isLoading: authorLoading,
-    isError: authorError,
-  } = useQuery({
+  const { data: postAuthor } = useQuery({
     queryKey: ["user", Post.userid],
     queryFn: () => getUserById(Post.userid),
     staleTime: 60 * 1000,
   });
 
   // Get Post Comments Count
-  const {
-    data: commentsCountData,
-  } = useQuery({
+  const { data: commentsCountData } = useQuery({
     queryKey: ["commentsCount", Post.postid],
     queryFn: () => getCommentsCountByPost(Post.postid),
     staleTime: 60 * 1000,
@@ -79,24 +64,43 @@ const BlogPost = ({ Post }) => {
     },
   });
 
-  useQuery({
+  // Get Post Likes
+  const { data: postLikes = [], isLoading: likesLoading } = useQuery({
     queryKey: ["postLikes", Post.postid],
     queryFn: () => getLikesByPost(Post.postid),
-    onSuccess: (likes) => {
-      setNumLikes(likes.length);
-      setLiked(likes.some((like) => like.userid === currentUserId));
-    },
     staleTime: 60 * 1000,
   });
 
-  // Delete Post
+  const numLikes = postLikes.length;
+  const liked = postLikes.some((like) => like.userid === currentUserId);
+
+  // Like/Unlike
+  const handleLiked = async () => {
+    if (loadingLike) return;
+    setLoadingLike(true);
+
+    try {
+      if (liked) {
+        await deletePostLike(Post.postid);
+      } else {
+        await createPostLike(Post.postid);
+      }
+      await queryClient.invalidateQueries({
+        queryKey: ["postLikes", Post.postid],
+      });
+    } catch (err) {
+      console.error("Error toggling like", err);
+    } finally {
+      setLoadingLike(false);
+    }
+  };
+
   const handleDelete = () => {
     if (window.confirm("Are you sure you want to delete this post?")) {
       deleteMutation.mutate();
     }
   };
 
-  // Edit Post
   const handleEdit = async () => {
     const newDescr = window.prompt("Edit your post:", Post.descr);
     if (newDescr?.trim()) {
@@ -104,27 +108,6 @@ const BlogPost = ({ Post }) => {
         postId: Post.postid,
         updatedData: { descr: newDescr.trim(), image: Post.image },
       });
-    }
-  };
-
-  // Like/Unlike
-  const handleLiked = async () => {
-    if (loadingLike) return;
-    setLoadingLike(true);
-    try {
-      if (liked) {
-        await deletePostLike(Post.postid);
-        setNumLikes((prev) => prev - 1);
-        setLiked(false);
-      } else {
-        await createPostLike(Post.postid);
-        setNumLikes((prev) => prev + 1);
-        setLiked(true);
-      }
-    } catch (err) {
-      console.error("Error toggling like", err);
-    } finally {
-      setLoadingLike(false);
     }
   };
 
@@ -167,7 +150,7 @@ const BlogPost = ({ Post }) => {
           liked={liked}
           handleLiked={handleLiked}
           numLikes={numLikes}
-          loading={loadingLike}
+          loading={loadingLike || likesLoading}
         />
 
         <button
