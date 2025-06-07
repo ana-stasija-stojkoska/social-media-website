@@ -19,7 +19,7 @@ Profile page:
 ![profile other](https://github.com/user-attachments/assets/08ccfbcf-343f-4e55-ac11-cc6a974d79c5)
 
 Medium screen:
-
+![medium screen](https://github.com/user-attachments/assets/75b10e02-c064-4242-aba2-297b46c41d4c)
 
 Small screen:
 
