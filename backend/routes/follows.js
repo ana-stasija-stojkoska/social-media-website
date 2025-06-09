@@ -3,7 +3,8 @@ import {
     getFollowing,
     getFollowers,
     followUser,
-    unfollowUser
+    unfollowUser,
+    getSuggestedUsers
 } from "../controllers/followsController.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 
@@ -13,5 +14,6 @@ router.get("/following/:userid", getFollowing);
 router.get("/followers/:userid", getFollowers);
 router.post("/", verifyToken, followUser);
 router.delete("/:followedid", verifyToken, unfollowUser);
+router.get("/suggested", verifyToken, getSuggestedUsers);
 
 export default router;

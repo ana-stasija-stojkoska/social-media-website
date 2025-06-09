@@ -84,3 +84,31 @@ export const unfollowUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Get Suggested Users to Follow
+export const getSuggestedUsers = async (req, res) => {
+  const userId = req.userId;
+
+  const query = `
+    SELECT u.userid, u.name, u.profilepicture, COUNT(*) AS mutual_count
+    FROM follows f1
+    JOIN follows f2 ON f1.followeduserid = f2.followeruserid
+    JOIN "user" u ON u.userid = f2.followeduserid
+    WHERE f1.followeruserid = $1
+      AND f2.followeduserid != $1
+      AND f2.followeduserid NOT IN (
+        SELECT followeduserid FROM follows WHERE followeruserid = $1
+      )
+    GROUP BY u.userid, u.name, u.profilepicture
+    ORDER BY mutual_count DESC
+    LIMIT 10;
+  `;
+
+  try {
+    const { rows } = await pool.query(query, [userId]);
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching suggested users:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};

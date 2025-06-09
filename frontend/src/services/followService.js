@@ -14,3 +14,8 @@ export const unfollowUser = async (followeduserid) => {
   const result = await axios.delete(`/follows/${followeduserid}`);
   return result.data;
 };
+
+export const getSuggestedUsers = async () => {
+  const result = await axios.get(`/follows/suggested`);
+  return result.data;
+}
