@@ -20,7 +20,8 @@
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.6.0",
     "sort-by": "^0.0.2",
-    "tailwindcss": "^4.1.7"
+    "tailwindcss": "^4.1.7",
+    "timeago.js": "^4.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

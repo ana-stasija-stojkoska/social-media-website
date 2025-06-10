@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAllReels, createReel } from "../../services/reelService";
+import { getFeedReels, createReel } from "../../services/reelService";
 import { getUserById } from "../../services/userService";
 import { useEffect, useState } from "react";
 import ReelCard from "./ReelCard";
@@ -9,7 +9,7 @@ const Reels = () => {
 
   const { data: reels = [], isLoading, isError } = useQuery({
     queryKey: ["reels"],
-    queryFn: getAllReels,
+    queryFn: getFeedReels,
   });
 
   const [reelsWithUser, setReelsWithUser] = useState([]);

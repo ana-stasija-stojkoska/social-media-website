@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { getSuggestedUsers, followUser } from "../../services/followService";
+import { getLatestActivities } from "../../services/activityService";
 import OnlineFriends from "../OnlineFriends";
+
+import { format } from "timeago.js";
 
 import suggestedFriend from "../../assets/woman.jpg";
 
 const RightBar = () => {
   const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [activities, setActivities] = useState([]);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -32,15 +36,25 @@ const RightBar = () => {
   };
 
   const handleDismiss = (userid) => {
-    setSuggestedUsers((prev) =>
-      prev.filter((user) => user.userid !== userid)
-    );
+    setSuggestedUsers((prev) => prev.filter((user) => user.userid !== userid));
   };
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const result = await getLatestActivities();
+        setActivities(result);
+      } catch (err) {
+        console.error("Failed to fetch activities", err);
+      }
+    };
+
+    fetchActivities();
+  }, []);
 
   return (
     <aside className="hidden lg:flex flex-col bg-base-200 h-[calc(100vh-64px)] mt-16 p-4 overflow-auto w-full">
       <div className="flex w-full flex-col gap-4 pt-4">
-
         {/* Suggestions for You */}
         <div className="card bg-base-300 rounded-box p-3 gap-3">
           <span className="pl-3 text-gray-500">Suggestions for You</span>
@@ -84,45 +98,31 @@ const RightBar = () => {
         <div className="card bg-base-300 rounded-box p-3 gap-3">
           <span className="pl-3 text-gray-500">Latest Activities</span>
           <ul className="menu text-base-content w-full gap-3 p-0">
-            <li>
-              <div className="grid grid-cols-[1fr_auto] items-center">
-                <div className="flex items-center gap-2 w-full">
-                  <img
-                    src={suggestedFriend}
-                    className="w-8 h-8 object-cover rounded-full"
-                  />
-                  <span>
-                    <strong>Johannah Doe</strong>{" "}
-                    <span className="text-gray-500">liked a post</span>
-                  </span>
+            {activities.map((activity, i) => (
+              <li key={i}>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2 w-[calc(100%-7rem)]">
+                    <img
+                      src={activity.profilepicture}
+                      className="w-8 h-8 object-cover rounded-full shrink-0"
+                      alt={activity.name}
+                    />
+                    <div className="leading-snug">
+                      <strong className="font-medium">{activity.name}</strong>{" "}
+                      <span className="text-gray-500">{activity.action}</span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500 text-right min-w-[6rem] shrink-0">
+                    {format(activity.timecreated)}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500 w-28 text-right">
-                  10 min ago
-                </div>
-              </div>
-            </li>
-            <li>
-              <div className="grid grid-cols-[1fr_auto] items-center">
-                <div className="flex items-center gap-2 w-full">
-                  <img
-                    src={suggestedFriend}
-                    className="w-8 h-8 object-cover rounded-full"
-                  />
-                  <span>
-                    <strong>Johannah Smithonson</strong>{" "}
-                    <span className="text-gray-500">created a blog post</span>
-                  </span>
-                </div>
-                <div className="text-sm text-gray-500 w-28 text-right">
-                  12 months ago
-                </div>
-              </div>
-            </li>
+              </li>
+            ))}
           </ul>
         </div>
 
         {/* Online Friends */}
-        <OnlineFriends suggestedFriend={suggestedFriend}/>
+        <OnlineFriends suggestedFriend={suggestedFriend} />
       </div>
     </aside>
   );

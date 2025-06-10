@@ -5,6 +5,11 @@ export const getAllReels = async () => {
   return result.data;
 };
 
+export const getFeedReels = async () => {
+  const result = await axios.get("/reels/feed");
+  return result.data;
+}
+
 export const createReel = async (imageUrl) => {
   const result = await axios.post("/reels", { image: imageUrl });
   return result.data;
